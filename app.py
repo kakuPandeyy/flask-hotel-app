@@ -1,27 +1,32 @@
 # python -m venv env -->pta nhi kyu kikha check krege 
 
-from flask import Flask,render_template,redirect,url_for,flash,request, jsonify
+from flask import Flask,render_template,redirect,url_for,flash,request, jsonify ,session
 from flask_wtf import FlaskForm
-from wtforms import StringField,IntegerField,SelectField,SubmitField
-from wtforms.validators import DataRequired, Email, EqualTo ,optional
+from wtforms import StringField,IntegerField,DateField,SelectField,SubmitField
+from wtforms.validators import DataRequired ,optional,ValidationError
 from flask_mysqldb import MySQL
-import json
+from datetime import datetime
+# import json
 
-createGuestQuary = """create table if not exists guest_register (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                                                              firstName TEXT, 
-                                                              lastName TEXT,
-                                                              username TEXT,
-                                                              email TEXT,
-                                                              address TEXT,
-                                                              guests INT)"""
+createGuestQuary = """create table if not exists guestInfo (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                                                               firstName TEXT, 
+                                                               lastName TEXT,
+                                                               username TEXT,
+                                                               email TEXT,
+                                                               address TEXT,
+                                                               guests INT,
+                                                               chekin DATE,
+                                                               chekout DATE,
+                                                               propertyId INT,
+                                                               FOREIGN KEY (propertyId) REFERENCES propertydata(id))"""
 
  
-insertIntoTable= """ INSERT INTO guest_register (firstName,lastName,username,email,address,guests)
-                                       VALUES ('{}','{}','{}','{}','{}','{}')"""
+insertIntoTable= """ INSERT INTO guestInfo (firstName,lastName,username,email,address,guests,chekin,chekout,propertyId)
+                                       VALUES ('{}','{}','{}','{}','{}','{}','{}','{}','{}')"""
 username_email_exits="""  SELECT CASE 
                        WHEN EXISTS (
                                    SELECT 1 
-                                   FROM guest_register 
+                                   FROM guestInfo 
                                     WHERE username = '{}' OR email = '{}'
                                     ) THEN 'Exist'
                             ELSE 'NotExist'
@@ -35,14 +40,20 @@ app = Flask(__name__)
 
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'kakukaku'
+app.config['MYSQL_PASSWORD'] = 'secrate pass'
 app.config['MYSQL_DB'] = 'hotel_app'
 app.config['SECRET_KEY'] = 'your_secret_key_here'
 app.config['WTF_CSRF_ENABLED'] = True
  
 mysql = MySQL(app)
 
+def future_date_only(form, field):
+    if field.data <= datetime.today().date():
+        raise ValidationError("Date must be in the future.")
 
+def date_greater_than_start(form, field):
+       if form.chekIN.data and field.data <= form.chekIN.data:
+        raise ValidationError("End date must be greater than start date.")
 
 class RegisterForm(FlaskForm):
      firstName=StringField("First name",validators=[DataRequired()])
@@ -51,8 +62,13 @@ class RegisterForm(FlaskForm):
      email=StringField("email",validators=[DataRequired()])
      address=StringField("Address",validators=[optional()])
      numberOfGuest=SelectField("number of guest",choices=[1,2,3,4,5,6,7,8],validators=[DataRequired()])
+    #  title=""
+    #  total_price=0
+     chekIN = DateField('Date of check in ', validators=[future_date_only,DataRequired()])
+     chekOUT = DateField('Date of check out ', validators=[date_greater_than_start,DataRequired()])
+     propertyId = IntegerField(' property id',validators=[DataRequired()])
      submit= SubmitField("submit")
-     error_fileds=""
+    #  error_fileds=""
 
 class statusRegis():
      status = False
@@ -72,11 +88,11 @@ def sqlfunction(action,read):
          mysql.connection.commit()  
 
          data= cur.fetchall()
-         cur.close()
-         return data
 
-                
-         
+         cur.close()
+
+         return data
+     
    
      else:
         cur = mysql.connection.cursor()
@@ -100,11 +116,13 @@ def home():
 @app.route('/info',methods=['GET','POST'])
 def info():
     sqlfunction(createGuestQuary,False)
-   
-   
     form = RegisterForm()
-    
-    
+    data = {}
+    # if 'received_data' in session:
+    #     data = session['received_data']
+    #     print("seesion",data)
+    #     print(data['title'])
+        
     if form.validate_on_submit():
         print("form get valided")
         fname=form.firstName.data
@@ -113,7 +131,12 @@ def info():
         email=form.email.data
         add =form.address.data
         noOfGuest = form.numberOfGuest.data
-
+        
+        # title=data['title']
+        # total_price=data['price']*noOfGuest
+        chekIN=form.chekIN.data
+        chekOUT =form.chekOUT.data
+        propertyId = form.propertyId.data
         data= sqlfunction(username_email_exits.format(username,email),True)
 
         print(data[0][0])
@@ -124,9 +147,9 @@ def info():
             statusRegis.errorMsg = "this  email or username already taken"
             return redirect(url_for('statusOfRegis'))
         else:
-            sqlfunction(insertIntoTable.format(fname,lname,username,email,add,noOfGuest),False)
+            sqlfunction(insertIntoTable.format(fname,lname,username,email,add,noOfGuest,chekIN,chekOUT,propertyId),False)
             statusRegis.status=True
-            statusRegis.successMsg=" congratulations {} {} {} number of guest has been booked for given hotel on the username of {} and {} email is registered ".format(fname,lname,noOfGuest,username,email)
+            statusRegis.successMsg=" congratulations {} {} {} number of guest has been booked for given hotel on the username of {} and {} email is registered of property {} {} {} ".format(fname,lname,noOfGuest,username,email,chekIN,chekOUT,propertyId)
             return redirect(url_for('statusOfRegis'))
     
     else:
@@ -162,11 +185,12 @@ def addProperties():
      return data[0][0]
 
 
-@app.route('/seletedHotel',methods=['GET','POST'])
-def seletedHotel():
-      data = request.get_json()
-      print(data)
-      return jsonify({'status': 'success', 'data_received': data})
+# @app.route('/seletedHotel',methods=['GET','POST'])
+# def seletedHotel():
+#       data = request.get_json()
+#       session['received_data'] = data
+#       return redirect(url_for('info'))
+
 
 if __name__ == '__main__':
     app.run(debug=True)

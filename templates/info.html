@@ -105,6 +105,9 @@
       .bd-mode-toggle .dropdown-menu .active .bi {
         display: block !important;
       }
+      #propertyId {
+        display :none;
+      }
     </style>
 
     
@@ -174,50 +177,58 @@
     
 <div class="container">
   <main>
+
     <div class="py-5 text-center">
       <img class="d-block mx-auto mb-4" src="https://i.postimg.cc/RCcxJ0Ft/logo.png" alt="img not found"  width="100" height="100" >
       <h2> guest registion form</h2>
       <p class="lead"> please fill the details of guests  </p>
     </div>
+    <div class="py-3 d-flex flex-row gap-5">
+      <div>    
+          <img id="hotelImg" class="d-block mx-auto mb-4 rounded-pill" src="" alt="img not found"  width="100" height="100" >
+      </div>
+      <div>
+        <h3 id="hotelTitle"> hotel title </h3>
+        <p  id="hotelDescr" > please fill the details of guests  </p>
+     
+       
+        <form >
 
+        </form>
+      </div>
+
+    </div>
     <div class="row g-5">
       <div class="col-md-5 col-lg-4 order-md-last">
         <h4 class="d-flex justify-content-between align-items-center mb-3">
           <span class="text-primary">Your cart</span>
-          <span class="badge bg-primary rounded-pill">3</span>
         </h4>
         <ul class="list-group mb-3">
           <li class="list-group-item d-flex justify-content-between lh-sm">
             <div>
-              <h6 class="my-0"> charges of each </h6>
-              <small class="text-body-secondary">Brief description</small>
+              <h6 class="my-0"> charges </h6>
+              <small class="text-body-secondary">charges of per person per day</small>
             </div>
-            <span class="text-body-secondary">$12</span>
+           <span id="hotelPrice" class="text-body-secondary"> </span>
           </li>
           <li class="list-group-item d-flex justify-content-between lh-sm">
             <div>
               <h6 class="my-0">Servers charges</h6>
               <small class="text-body-secondary"> charges for  food & drinks </small>
             </div>
-            <span class="text-body-secondary">$8</span>
+            <span class="text-body-secondary">$40</span>
           </li>
-          <li class="list-group-item d-flex justify-content-between lh-sm">
-            <div>
-              <h6 class="my-0">GST 18%</h6>
-              <small class="text-body-secondary"> charges of tex of indian govt</small>
-            </div>
-            <span class="text-body-secondary">$5</span>
-          </li>
+        
           <li class="list-group-item d-flex justify-content-between bg-body-tertiary">
             <div class="text-success">
               <h6 class="my-0">Promo code</h6>
               <small>EXAMPLECODE</small>
             </div>
-            <span class="text-success">−$5</span>
+            <span class="text-success"> -$50 </span>
           </li>
           <li class="list-group-item d-flex justify-content-between">
             <span>Total (USD)</span>
-            <strong>$20</strong>
+            <strong id="totalPrice">$20</strong>
           </li>
         </ul>
 
@@ -229,12 +240,13 @@
         </form>
       </div>
       <div class="col-md-7 col-lg-8">
-        <h4 class="mb-3">Billing address</h4>
+        <h4 class="mb-3 mt-1">Billing address</h4>
         <form class="needs-validation" action="/info" method="POST" novalidate>
           {{ form.csrf_token }}
           {{ form.hidden_tag() }}
           <div class="row g-3">
             <div class="col-sm-6">
+              {{form.propertyId( id="propertyId")}}
               {{form.firstName.label(class_="form-label",for="firstName")}}
               {{form.firstName(class_="form-control" ,id="firstName")}}
               <!-- <label for="firstName" class="form-label">First name</label>
@@ -352,6 +364,17 @@
             <div class="invalid-feedback">
               Please provide a valid state.
             </div>
+            <div class="my-3 ">
+              <div class="my-3 ">
+                {{form.chekIN.label(class_="form-label",for="chekIN")}}
+              {{form.chekIN()}}
+              </div>
+              <div class="my-3 ">
+                {{form.chekOUT.label(class_="form-label ml-5",for="chekOUT")}}
+                {{form.chekOUT()}}
+              </div>
+             
+            </div>
           </div>
 
           <h4 class="mb-3 pt-3 ">Payment</h4>
@@ -430,5 +453,31 @@
 
 <script src="/docs/5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 
-    <script src="checkout.js"></script></body>
+    <script>
+   const hotelImg =   document.getElementById("hotelImg")
+   const hotelTitle = document.getElementById("hotelTitle")
+   const hotelDescr = document.getElementById("hotelDescr")
+   const hotelPrice = document.getElementById("hotelPrice")
+   const totalPrice = document.getElementById("totalPrice")
+   const propertyId = document.getElementById("propertyId")
+  async function setPage() {
+   try {
+    const selectCardData = await JSON.parse(localStorage.getItem("seletedCard"))
+    hotelImg.src = selectCardData.scrImg
+    hotelTitle.textContent = selectCardData.title  
+    hotelDescr.textContent =selectCardData.description 
+    hotelPrice.textContent = `$${selectCardData.price}`
+    totalPrice.textContent = `$${selectCardData.price - 10}`
+    propertyId.value = selectCardData.id
+  } catch (error) {
+    console.log(error);
+  }
+  }
+  setPage()
+
+
+   
+
+
+    </script></body>
 </html>

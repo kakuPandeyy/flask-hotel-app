@@ -232,38 +232,60 @@
     </body>
 
     <script>
-       let count =0
+       let count =1
        function redirect()
     {
      location.href= "http://localhost:5000/info"
     }
-      function createNewCard(srcImg,title,description,price){
+      function createNewCard(id,srcImg,title,description,price){
 
         
         const ele = document.getElementById('cards');//----
         // console.log(ele);
         
         const colDiv = document.createElement('div');//<---
-        colDiv.addEventListener("click", ()=>{
-          data ={"scrImg":srcImg,"title":title,"description":description,"price":price}
-          fetch('/seletedHotel', {
-               method: 'POST',
-               headers: {
-                           'Content-Type': 'application/json',
-                         },
-                body: JSON.stringify(data),
-                                        })
-                           .then(response => response.json())
-                            .then(data => {
-                                        console.log('Success:', data);
-                                    })
-                            .catch((error) => {
-                            console.error('Error:', error);
-                            });
-                            redirect()
+        colDiv.addEventListener("click",async ()=>{
+          try {
+          
+            
+            
+            
+          data ={"id":id,"scrImg":srcImg,"title":title,"description":description,"price":price}
+          await localStorage.setItem("seletedCard",JSON.stringify(data));
+          // let lastname = localStorage.getItem("seletedCard");
 
-        })
+          // console.log(lastname);
+          
+          } catch (error) {
+            console.log(error);
+            
+          }
+         
+            // console.log(lastname.title);
+            
+        //   fetch('/seletedHotel', {
+        //        method: 'POST',
+        //        headers: {
+        //                    'Content-Type': 'application/json',
+        //                  },
+        //         body: JSON.stringify(data),
+        //                                 })
+        //                    .then(response => response.json())
+        //                     .then(data => {
+        //                                 console.log('Success:', data);
+        //                             })
+        //                     .catch((error) => {
+        //                     console.error('Error:', error);
+        //                     });
+        //                   
+
+        // })
         //event over
+      
+          redirect()
+
+          
+      })
         colDiv.classList.add("col")
         colDiv.id = `colDiv_${count}`
         ele.appendChild(colDiv)
@@ -316,7 +338,6 @@
         //appending card <--- ele <-- colDIV <--- img,(cardBody<--(cardtex,divPrice<---priceheader)
         docDivPrice.appendChild(priceheader)     
         count++
-
       }
 
       // createNewCard()
@@ -340,9 +361,11 @@
 async function createCard() {
   try {
     const arrayOfHotels = await getData() 
-    for (let i = 0; i < arrayOfHotels.length; i++) {
+    for (let i = 1; i <= arrayOfHotels.length; i++) {
       //  const element = array[i];
-      createNewCard(arrayOfHotels[i].srcImg,arrayOfHotels[i].title,arrayOfHotels[i].description,arrayOfHotels[i].price)
+      
+      
+      createNewCard(i,arrayOfHotels[i].srcImg,arrayOfHotels[i].title,arrayOfHotels[i].description,arrayOfHotels[i].price)
     }
   } catch (error) {
     
